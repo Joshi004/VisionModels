@@ -1,0 +1,65 @@
+# Root .gitignore for the Vision monorepo.
+# Per-service .gitignore files still apply and take precedence inside their folders.
+
+# Secrets
+secrets/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# Virtual environments
+.venv/
+venv/
+
+# Node / UI build
+node_modules/
+model-api/ui/dist/
+
+# Model weights, checkpoints, Hugging Face caches
+models/
+checkpoints/
+.cache/
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+*.bin
+*.onnx
+*.nemo
+*.index
+*.gguf
+*.whl
+ModelService_RVC-Applio/voices/
+
+# Runtime data and generated outputs
+model-api/jobs/
+model-api/jobs.db*
+model-api/logs/
+outputs/
+transcripts/
+smoke_test/
+*.log
+*.pid
+*.zip
+
+# Local backup copies (git history replaces these)
+ltx-2.3/backups/
+model-api/ui/.backup-*/
+*.bak
+
+# Editors / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
