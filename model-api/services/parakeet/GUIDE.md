@@ -25,24 +25,22 @@ field.
 
 **curl:**
 ```bash
-TOKEN="<your bearer token>"
 BASE="http://localhost:8012"
 
 # 1. Upload
 ASSET_ID=$(curl -s -X POST "$BASE/v1/uploads" \
-  -H "Authorization: Bearer $TOKEN" \
   -F "file=@recording.m4a" | python3 -c "import sys,json; print(json.load(sys.stdin)['asset_id'])")
 
 # 2. Submit
 JOB_ID=$(curl -s -X POST "$BASE/v1/parakeet/transcribe" \
-  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -H "Content-Type: application/json" \
   -d "{\"audio_asset_id\": \"$ASSET_ID\"}" | python3 -c "import sys,json; print(json.load(sys.stdin)['job_id'])")
 
 # 3. Poll (every 10-15s)
-curl -s "$BASE/v1/jobs/$JOB_ID" -H "Authorization: Bearer $TOKEN"
+curl -s "$BASE/v1/jobs/$JOB_ID"
 
 # 4. Download the transcript once status == "succeeded"
-curl -s "$BASE/v1/jobs/$JOB_ID/result" -H "Authorization: Bearer $TOKEN" -o transcript.json
+curl -s "$BASE/v1/jobs/$JOB_ID/result" -o transcript.json
 ```
 
 **Python:**
@@ -51,21 +49,19 @@ import time
 import requests
 
 BASE = "http://localhost:8012"
-TOKEN = "<your bearer token>"
-headers = {"Authorization": f"Bearer {TOKEN}"}
 
 # 1. Upload
 with open("recording.m4a", "rb") as f:
-    asset_id = requests.post(f"{BASE}/v1/uploads", headers=headers, files={"file": f}).json()["asset_id"]
+    asset_id = requests.post(f"{BASE}/v1/uploads", files={"file": f}).json()["asset_id"]
 
 # 2. Submit
 job_id = requests.post(
-    f"{BASE}/v1/parakeet/transcribe", headers=headers, json={"audio_asset_id": asset_id}
+    f"{BASE}/v1/parakeet/transcribe", json={"audio_asset_id": asset_id}
 ).json()["job_id"]
 
 # 3. Poll
 while True:
-    status = requests.get(f"{BASE}/v1/jobs/{job_id}", headers=headers).json()
+    status = requests.get(f"{BASE}/v1/jobs/{job_id}").json()
     if status["status"] in ("succeeded", "failed"):
         break
     time.sleep(12)
@@ -74,7 +70,7 @@ if status["status"] == "failed":
     raise RuntimeError(status["error"])
 
 # 4. Download and parse
-transcript = requests.get(f"{BASE}/v1/jobs/{job_id}/result", headers=headers).json()
+transcript = requests.get(f"{BASE}/v1/jobs/{job_id}/result").json()
 print(transcript["transcription"])
 for word in transcript["word_timestamps"]:
     print(f"{word['start']:.2f}-{word['end']:.2f}  {word['word']}")

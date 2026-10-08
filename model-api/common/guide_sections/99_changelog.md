@@ -4,6 +4,10 @@ Dates are when a change shipped on this codebase, not necessarily when you're re
 `api_version` field (`GET /v1/guide?format=json`) is this server's own current version; compare it
 against what you last integrated against.
 
+- **0.4.0** (2026-10-08): Removed authentication entirely. No endpoint requires an `Authorization`
+  header any more, so no endpoint returns `401`, and `GET /v1/guide?format=json` no longer has a
+  `facts.auth` object. Clients that still send an `Authorization` header are unaffected -- it is
+  simply ignored.
 - **0.3.0** (2026-10-05): Added a fourth backend, Parakeet speech transcription
   (`POST /v1/parakeet/transcribe`) -- transcribes an existing recording (or a video's audio track)
   to text, with word- and segment-level timestamps; replaces that model's previous dedicated

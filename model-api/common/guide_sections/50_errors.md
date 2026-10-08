@@ -2,7 +2,6 @@
 
 | HTTP status | Meaning | What to do |
 |---|---|---|
-| `401` | Missing or invalid bearer token (only possible if this deployment currently requires one -- see "Access" above) | Send `Authorization: Bearer <token>`, or check with whoever operates this deployment that your token is still valid |
 | `400` | Something referenced in the request doesn't exist or isn't accepted -- an unknown `asset_id`, or (on endpoints that validate file type) an unsupported input format | Fix the request; the `detail` field names what was wrong |
 | `422` | The request body failed schema validation (missing/conflicting/out-of-range fields) | Fix the request; the `detail` array names the exact field and rule that failed |
 | `429` | An optional concurrency cap was reached (not configured on every deployment) | Wait and retry -- this isn't specific to your request |

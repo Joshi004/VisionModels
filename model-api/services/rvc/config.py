@@ -1,7 +1,7 @@
 """RVC (via the Applio fork) voice conversion configuration: project paths,
 the curated voice registry, and this backend's Slurm resource shape.
 
-API-wide settings (host/port, auth, job/upload storage, retention,
+API-wide settings (host/port, job/upload storage, retention,
 partition fallback) live in common/config.py instead -- this module only
 has what's specific to the RVC/Applio project itself.
 

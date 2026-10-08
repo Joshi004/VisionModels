@@ -47,8 +47,8 @@ function resultExtension(pipeline, request) {
 }
 
 // Loaded on demand (not automatically) and fetched as a blob rather than
-// used as a plain <video src="..."> -- a browser can't attach an
-// Authorization header to a plain media-element request, so this goes
+// used as a plain <video src="..."> -- a plain media element can't report
+// download progress or feed the local result cache below, so this goes
 // through api.js's fetch() wrapper instead and turns the response into an
 // object URL. Streamed with progress reporting (see api.js's
 // fetchResultBlob), since a result can be tens of MB and a bare spinner

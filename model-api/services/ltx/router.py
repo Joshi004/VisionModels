@@ -1,6 +1,6 @@
 """LTX-2.3's own generation endpoints, mounted by server.py under /v1/ltx.
 
-Shared infrastructure (auth, job status/result/cancel, uploads) lives at
+Shared infrastructure (job status/result/cancel, uploads) lives at
 the top level in server.py / common/, not here -- this router only has the
 endpoints that are specific to LTX-2.3's five generation recipes.
 """
@@ -9,10 +9,9 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi import APIRouter, Body, HTTPException
 
 from common import openapi_docs as common_docs
-from common.auth import require_token
 from common.schemas import JobSubmitResponse
 from services.ltx import dispatch, openapi_docs as ltx_docs
 from services.ltx.schemas import (
@@ -45,7 +44,6 @@ def _submit(dispatch_fn, req) -> JobSubmitResponse:
     description=ltx_docs.GENERATE_VIDEO,
     response_model=JobSubmitResponse,
     responses=common_docs.SUBMIT_RESPONSES,
-    dependencies=[Depends(require_token)],
 )
 def generate_video(
     req: Annotated[TextToVideoRequest, Body(openapi_examples=ltx_docs.GENERATE_VIDEO_EXAMPLES)],
@@ -60,7 +58,6 @@ def generate_video(
     description=ltx_docs.KEYFRAME_INTERPOLATION,
     response_model=JobSubmitResponse,
     responses=common_docs.SUBMIT_RESPONSES,
-    dependencies=[Depends(require_token)],
 )
 def keyframe_interpolation(
     req: Annotated[KeyframeInterpolationRequest, Body(openapi_examples=ltx_docs.KEYFRAME_EXAMPLES)],
@@ -75,7 +72,6 @@ def keyframe_interpolation(
     description=ltx_docs.AUDIO_TO_VIDEO,
     response_model=JobSubmitResponse,
     responses=common_docs.SUBMIT_RESPONSES,
-    dependencies=[Depends(require_token)],
 )
 def audio_to_video(
     req: Annotated[AudioToVideoRequest, Body(openapi_examples=ltx_docs.AUDIO_TO_VIDEO_EXAMPLES)],
@@ -90,7 +86,6 @@ def audio_to_video(
     description=ltx_docs.RETAKE,
     response_model=JobSubmitResponse,
     responses=common_docs.SUBMIT_RESPONSES,
-    dependencies=[Depends(require_token)],
 )
 def retake(
     req: Annotated[RetakeRequest, Body(openapi_examples=ltx_docs.RETAKE_EXAMPLES)],
@@ -105,7 +100,6 @@ def retake(
     description=ltx_docs.GENERATE_AUDIO,
     response_model=JobSubmitResponse,
     responses=common_docs.SUBMIT_RESPONSES,
-    dependencies=[Depends(require_token)],
 )
 def generate_audio(
     req: Annotated[TextToAudioRequest, Body(openapi_examples=ltx_docs.GENERATE_AUDIO_EXAMPLES)],

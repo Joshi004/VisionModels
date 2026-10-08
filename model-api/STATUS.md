@@ -37,7 +37,7 @@ cd /home/naresh/Vision/model-api
 ./run.sh
 ```
 
-This starts it inside a `tmux` session (so it keeps running after you disconnect), and prints where the access token lives (or confirms auth is disabled) plus the web UI's URL. You'd then reach both the API and `/ui/` over an SSH tunnel (`ssh -L 8012:localhost:8012 ...`) — neither is exposed to the open internet. There's still no auto-start on boot or auto-restart if it crashes or the environment restarts again later, same as before.
+This starts it inside a `tmux` session (so it keeps running after you disconnect), and prints how to attach/stop it plus the web UI's URL. You'd then reach both the API and `/ui/` over an SSH tunnel (`ssh -L 8012:localhost:8012 ...`) — neither is exposed to the open internet. There's still no auto-start on boot or auto-restart if it crashes or the environment restarts again later, same as before.
 
 ## 3. How a request actually gets served
 
@@ -267,7 +267,7 @@ Its folder isn't present in this workspace anymore, so there's nothing to wire i
 
 - **No auto-start or auto-restart.** The server has to be started manually (`./run.sh`) after any reboot or crash — nothing brings it back on its own. It also has to be **restarted (not just left running) any time this server's own code changes** — a running process doesn't see new code (including a freshly rebuilt web UI under `ui/dist/`) until it's relaunched. Most recently true for this session's web UI + `GET /v1/jobs` work (see §2); before that, the same thing happened for Wan-Animate v1's wiring.
 - **The web UI is a static build, not live-reloading.** After editing anything under `ui/src/`, you need to `cd ui && npm run build` *and then* restart the API process — the same two-step as any other code change here, just with an extra build step first. See `ui/README.md`.
-- **One shared password (token) for everything.** Whoever has it can submit jobs to every service behind this API, not just one. Fine for a single user; worth knowing if that changes.
+- **No authentication.** Anyone who can reach port 8012 on this machine (it listens on `0.0.0.0` by default) can submit, cancel, and delete jobs on every service behind this API, not just one. Fine for a single user on a trusted network; worth knowing if that changes.
 - **One global "too many jobs at once" limit**, shared across every service. A cheap 1-GPU LTX job, a ~25-minute 1-GPU Wan-Animate job, and an expensive 8-GPU MAGI job would all count the same toward it today — there's no way yet to say "allow more of the cheap ones at once than the expensive ones."
 - **LTX-2.3 still has no real end-to-end test** (see its section above) — everything short of actually finishing a real video has been checked for it. Wan-Animate v1 and RVC, by contrast, both now have one (see their sections above).
 - **Old job history wasn't carried over** when the API moved — the job database started fresh. Nothing currently depends on old job IDs, so this is a one-time, harmless reset, just worth knowing if you go looking for a job you remember submitting before this move.

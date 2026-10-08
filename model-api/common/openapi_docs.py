@@ -3,9 +3,9 @@ are shared by every backend (app-level description, tags, uploads, job
 tracking, and GET /v1/guide itself). Each backend's own endpoint docs (e.g.
 services/ltx/openapi_docs.py) live next to that backend's code instead.
 
-Every number quoted here is pulled from common/config.py (or
-common/auth.py's AUTH_DISABLED flag) at import time, not hardcoded, so the
-docs can't silently drift from the server's actual running configuration --
+Every number quoted here is pulled from common/config.py at import time,
+not hardcoded, so the docs can't silently drift from the server's actual
+running configuration --
 APP_DESCRIPTION in particular is rendered by common/guide.py from the same
 narrative file GET /v1/guide itself opens with, so the two can't disagree.
 """
@@ -30,7 +30,7 @@ TAGS_METADATA = [
     },
     {
         "name": "System",
-        "description": "Health check (always open, no auth) and live cluster-partition availability (requires a token like most endpoints, unless this deployment has auth disabled).",
+        "description": "Health check and live cluster-partition availability.",
     },
     {
         "name": "Uploads",
@@ -75,8 +75,8 @@ Two forms of the same content:
 - **`?format=markdown`** (default): plain prose, meant to be read directly by a developer or an
   LLM coding agent.
 - **`?format=json`**: the same prose (in a `markdown` field) plus a `facts` object -- the same
-  information, structured for code to consume without parsing text (current auth mode, upload/
-  retention limits, registered backends, recommended polling interval, and more).
+  information, structured for code to consume without parsing text (upload/retention limits,
+  registered backends, recommended polling interval, and more).
 
 Cache using the `ETag` response header (or the JSON body's own `content_hash` field, which is the
 same value): send it back as `If-None-Match` on a later request and get a `304` with no body if
@@ -100,8 +100,7 @@ GUIDE_RESPONSES = {
 # GET /v1/health -- moved here from server.py for consistency with every
 # other endpoint's docs, which all live in a *_docs module rather than
 # inline. No HEALTH_RESPONSES constant: this handler has no error path at
-# all (not even 401 -- it deliberately has no auth dependency), so there is
-# nothing beyond the default 200 to document.
+# all, so there is nothing beyond the default 200 to document.
 # ---------------------------------------------------------------------------
 
 HEALTH = """
@@ -247,23 +246,6 @@ regardless of how recently the job finished.
 # reused by every backend's generation endpoints.
 # ---------------------------------------------------------------------------
 
-#: Documented on every endpoint that actually wires up the auth dependency,
-#: regardless of whether this *particular* running deployment currently has
-#: MODEL_API_DISABLE_AUTH set -- a deployment's auth mode is a runtime
-#: setting, not something baked into the schema, so the schema documents
-#: what's *possible* here, and GET /v1/guide (or this API's own top-level
-#: description) reports what's actually in effect right now.
-AUTH_ERROR_RESPONSES: dict[int, dict] = {
-    401: {
-        "description": (
-            "Missing or invalid bearer token. Only returned on deployments that currently require "
-            "one -- see this API's top-level description, or GET /v1/guide, for whether that's the "
-            "case right now."
-        ),
-        "content": {"application/json": {"example": {"detail": "Missing or invalid bearer token."}}},
-    }
-}
-
 _VALIDATION_ERROR_RESPONSE = {
     422: {
         "description": "Request failed schema validation (e.g. conflicting fields, out-of-range values).",
@@ -323,7 +305,6 @@ _JOB_NOT_FOUND_RESPONSE = {
 }
 
 SUBMIT_RESPONSES = {
-    **AUTH_ERROR_RESPONSES,
     **_VALIDATION_ERROR_RESPONSE,
     **_ASSET_ERROR_RESPONSE,
     **_CAPACITY_RESPONSE,
@@ -331,7 +312,6 @@ SUBMIT_RESPONSES = {
 }
 
 UPLOAD_RESPONSES = {
-    **AUTH_ERROR_RESPONSES,
     413: {
         "description": f"File exceeds the {config.MAX_UPLOAD_BYTES} byte limit.",
         "content": {
@@ -342,12 +322,9 @@ UPLOAD_RESPONSES = {
     },
 }
 
-JOB_LIST_RESPONSES = {
-    **AUTH_ERROR_RESPONSES,
-}
+JOB_LIST_RESPONSES: dict[int, dict] = {}
 
 PARTITIONS_RESPONSES = {
-    **AUTH_ERROR_RESPONSES,
     503: {
         "description": "The live cluster-scheduler status couldn't be read just now, and there's no previous snapshot to fall back to yet. Transient -- retry shortly.",
         "content": {
@@ -359,7 +336,6 @@ PARTITIONS_RESPONSES = {
 }
 
 JOB_STATUS_RESPONSES = {
-    **AUTH_ERROR_RESPONSES,
     **_JOB_NOT_FOUND_RESPONSE,
 }
 
@@ -376,7 +352,6 @@ JOB_RESULT_RESPONSES = {
             "application/zip": {},
         },
     },
-    **AUTH_ERROR_RESPONSES,
     **_JOB_NOT_FOUND_RESPONSE,
     409: {
         "description": "The job exists but hasn't finished successfully yet.",
@@ -395,12 +370,10 @@ JOB_RESULT_RESPONSES = {
 }
 
 CANCEL_RESPONSES = {
-    **AUTH_ERROR_RESPONSES,
     **_JOB_NOT_FOUND_RESPONSE,
 }
 
 PURGE_RESPONSES = {
-    **AUTH_ERROR_RESPONSES,
     **_JOB_NOT_FOUND_RESPONSE,
     409: {
         "description": "The job is still queued/running (cancel it first), or its directory could not be fully removed yet (safe to retry).",

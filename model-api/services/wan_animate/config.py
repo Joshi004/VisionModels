@@ -1,7 +1,7 @@
 """Wan-Animate v1 (Wan2.2-Animate-14B, replace mode) configuration: project
 paths and this backend's Slurm resource shape.
 
-API-wide settings (host/port, auth, job/upload storage, retention,
+API-wide settings (host/port, job/upload storage, retention,
 partition fallback) live in common/config.py instead -- this module only
 has what's specific to the Wan-Animate v1 project itself.
 

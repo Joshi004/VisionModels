@@ -5,7 +5,7 @@ later).
 Per-backend configuration (model checkpoints, Slurm resource shape, project
 paths) lives in services/<name>/config.py instead -- see that module's
 docstring for why the split is there. This module owns everything the
-job-tracking/upload/auth machinery in this directory needs, since that
+job-tracking/upload machinery in this directory needs, since that
 machinery is shared by every backend.
 
 Zero third-party dependencies (stdlib only) so it can be imported both by
@@ -17,7 +17,6 @@ need fastapi/uvicorn installed at all.
 from __future__ import annotations
 
 import os
-import secrets
 from pathlib import Path
 
 # ---------------------------------------------------------------------------
@@ -38,8 +37,6 @@ UPLOADS_DIR = JOBS_DIR / "_uploads"
 # still starts fine even before anyone's run `npm run build` there.
 UI_DIST_DIR = MODEL_API_DIR / "ui" / "dist"
 
-SECRETS_DIR = MODEL_API_DIR / "secrets"
-TOKEN_PATH = SECRETS_DIR / "api_token.txt"
 DB_PATH = MODEL_API_DIR / "jobs.db"
 
 # ---------------------------------------------------------------------------
@@ -75,30 +72,6 @@ FALLBACK_PARTITION = os.environ.get("MODEL_API_FALLBACK_PARTITION", "background"
 SLURM_JOB_NAME_PREFIX = os.environ.get("MODEL_API_SLURM_JOB_NAME_PREFIX", "data-validation-")
 
 
-def get_or_create_api_token() -> str:
-    """Return the API bearer token, generating and persisting one on first run.
-
-    Stored outside the repo's normal source tree expectations (secrets/,
-    chmod 600) so it isn't accidentally committed or world-readable.
-    """
-    if TOKEN_PATH.exists():
-        token = TOKEN_PATH.read_text().strip()
-        if token:
-            return token
-    SECRETS_DIR.mkdir(parents=True, exist_ok=True)
-    token = secrets.token_urlsafe(32)
-    TOKEN_PATH.write_text(token + "\n")
-    TOKEN_PATH.chmod(0o600)
-    return token
-
-
 def ensure_directories() -> None:
-    for d in (JOBS_DIR, UPLOADS_DIR, SECRETS_DIR):
+    for d in (JOBS_DIR, UPLOADS_DIR):
         d.mkdir(parents=True, exist_ok=True)
-
-
-# Generated/loaded once at import time, not lazily -- every module that
-# needs the token (currently just auth.py) gets the same value for the life
-# of the process, and the file is created on first import rather than on
-# first request.
-API_TOKEN = get_or_create_api_token()

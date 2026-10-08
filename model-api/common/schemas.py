@@ -338,25 +338,6 @@ class PurgeResponse(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-class AuthFacts(BaseModel):
-    """Authentication facts for GET /v1/guide -- lets client code decide
-    whether to send a bearer token without parsing prose."""
-
-    required: bool = Field(
-        ...,
-        description="True if this deployment currently requires a bearer token on non-public endpoints.",
-        examples=[False],
-    )
-    scheme: Literal["bearer"] = Field(
-        "bearer", description="The auth scheme used when required: 'Authorization: Bearer <token>'."
-    )
-    public_paths: list[str] = Field(
-        ...,
-        description="Paths that never require a token, regardless of the 'required' flag above.",
-        examples=[["/v1/health", "/v1/guide", "/docs", "/redoc", "/openapi.json"]],
-    )
-
-
 class LimitFacts(BaseModel):
     """Numeric limits for GET /v1/guide, read live from this server's own
     configuration -- never hardcoded, so they can't drift from reality."""
@@ -414,7 +395,6 @@ class GuideFacts(BaseModel):
     base_url: str = Field(
         ..., description="This API's own base URL, exactly as the request that fetched this guide reached it.", examples=["http://localhost:8012"]
     )
-    auth: AuthFacts
     limits: LimitFacts
     polling: PollingFacts
     partitions: PartitionFacts

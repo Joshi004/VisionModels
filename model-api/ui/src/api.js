@@ -1,23 +1,8 @@
 // Thin wrapper around fetch()/XMLHttpRequest for talking to this same
 // origin's /v1/... API (see vite.config.js's dev proxy for why this also
 // works with `npm run dev`). No validation lives here -- the API is the
-// source of truth; this module only adds the auth header when a token is
-// set, and turns FastAPI's error bodies into a plain message string every
-// caller can just display.
-
-const TOKEN_KEY = 'model-api-token';
-
-export function getToken() {
-  return localStorage.getItem(TOKEN_KEY) || '';
-}
-
-export function setToken(token) {
-  if (token) {
-    localStorage.setItem(TOKEN_KEY, token);
-  } else {
-    localStorage.removeItem(TOKEN_KEY);
-  }
-}
+// source of truth; this module only turns FastAPI's error bodies into a
+// plain message string every caller can just display.
 
 export class ApiError extends Error {
   constructor(message, status) {
@@ -25,11 +10,6 @@ export class ApiError extends Error {
     this.name = 'ApiError';
     this.status = status;
   }
-}
-
-function authHeaders() {
-  const token = getToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 // FastAPI's error body is {"detail": "..."} for most errors, or
@@ -67,10 +47,7 @@ function parseXhrError(xhr) {
 }
 
 async function request(path, options = {}) {
-  const response = await fetch(path, {
-    ...options,
-    headers: { ...authHeaders(), ...(options.headers || {}) },
-  });
+  const response = await fetch(path, options);
   if (!response.ok) {
     throw new ApiError(await parseErrorDetail(response), response.status);
   }
@@ -105,8 +82,6 @@ export function uploadFile(file, onProgress) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open('POST', '/v1/uploads');
-    const token = getToken();
-    if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
     if (onProgress) {
       xhr.upload.onprogress = (event) => {
         onProgress(event.loaded, event.lengthComputable ? event.total : file.size);
@@ -164,8 +139,8 @@ export function purgeJob(jobId) {
   return deleteJSON(`/v1/jobs/${jobId}/purge`);
 }
 
-// Fetched as a blob (not a plain <video src=...>) because a browser can't
-// attach an Authorization header to a plain media-element request -- see
+// Fetched as a blob (not a plain <video src=...>) so download progress can
+// be reported and the result cached locally -- see
 // components/ResultPreview.jsx. Streamed chunk-by-chunk (rather than a
 // plain response.blob()) so `onProgress(receivedBytes, totalBytes)` can
 // report real download progress; omit it to just await the whole blob.

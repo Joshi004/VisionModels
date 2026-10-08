@@ -15,8 +15,7 @@ guide's "Overview"). Every endpoint specific to this backend lives under `/v1/lt
 (`/v1/uploads`, `/v1/jobs/...`) are shared infrastructure with no `/ltx` prefix, used the same way
 regardless of which backend created the job -- see the main guide's "Jobs and timing" section.
 
-Check `GET /v1/health` first to confirm the server is reachable, and see the main guide's "Access"
-section for whether this particular running instance currently requires a bearer token.
+Check `GET /v1/health` first to confirm the server is reachable.
 
 Every generation request on this (and any) backend may also set an optional top-level `partition`
 field to choose which Slurm partition its job submits to (e.g. `"main"` instead of the default).

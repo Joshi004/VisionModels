@@ -1,7 +1,7 @@
 """Parakeet's own transcription endpoint, mounted by server.py under
 /v1/parakeet.
 
-Shared infrastructure (auth, job status/result/cancel, uploads) lives at
+Shared infrastructure (job status/result/cancel, uploads) lives at
 the top level in server.py / common/, not here -- this router only has the
 endpoint specific to Parakeet's own recipe.
 """
@@ -10,9 +10,8 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi import APIRouter, Body, HTTPException
 
-from common.auth import require_token
 from common.schemas import JobSubmitResponse
 from services.parakeet import dispatch
 from services.parakeet import openapi_docs as parakeet_docs
@@ -42,7 +41,6 @@ def _submit(dispatch_fn, req) -> JobSubmitResponse:
     description=parakeet_docs.TRANSCRIBE,
     response_model=JobSubmitResponse,
     responses=parakeet_docs.TRANSCRIBE_RESPONSES,
-    dependencies=[Depends(require_token)],
 )
 def transcribe(
     req: Annotated[TranscribeRequest, Body(openapi_examples=parakeet_docs.TRANSCRIBE_EXAMPLES)],

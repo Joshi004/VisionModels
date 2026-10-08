@@ -1,7 +1,7 @@
 """Wan-Animate v1's own generation endpoint, mounted by server.py under
 /v1/wan-animate.
 
-Shared infrastructure (auth, job status/result/cancel, uploads) lives at
+Shared infrastructure (job status/result/cancel, uploads) lives at
 the top level in server.py / common/, not here -- this router only has the
 one endpoint specific to Wan-Animate v1's replace-mode recipe.
 """
@@ -10,10 +10,9 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi import APIRouter, Body, HTTPException
 
 from common import openapi_docs as common_docs
-from common.auth import require_token
 from common.schemas import JobSubmitResponse
 from services.wan_animate import dispatch, openapi_docs as wan_animate_docs
 from services.wan_animate.schemas import ReplaceRequest
@@ -40,7 +39,6 @@ def _submit(dispatch_fn, req) -> JobSubmitResponse:
     description=wan_animate_docs.REPLACE,
     response_model=JobSubmitResponse,
     responses=common_docs.SUBMIT_RESPONSES,
-    dependencies=[Depends(require_token)],
 )
 def replace_character(
     req: Annotated[ReplaceRequest, Body(openapi_examples=wan_animate_docs.REPLACE_EXAMPLES)],

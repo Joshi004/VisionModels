@@ -1,12 +1,11 @@
 """Builds the content behind GET /v1/guide: the single, always-current
 reference a third-party system should read to use this whole API, end to
-end -- what every backend does, how auth/jobs/uploads work, and the exact
+end -- what every backend does, how jobs/uploads work, and the exact
 current endpoint reference.
 
 Three live inputs, never copied by hand, so the guide cannot drift from
 reality the way a hand-maintained document can:
-  1. This process's own config/auth state (common/config.py,
-     common/auth.py) -- "facts" below.
+  1. This process's own config state (common/config.py) -- "facts" below.
   2. The running app's own OpenAPI schema (FastAPI's app.openapi(), the
      same thing /openapi.json serves) -- the endpoint reference.
   3. A handful of short narrative .md files (common/guide_sections/, plus
@@ -32,7 +31,6 @@ from pathlib import Path
 from typing import Any, NamedTuple
 
 from common import config
-from common.auth import AUTH_DISABLED
 
 logger = logging.getLogger("model-api.guide")
 
@@ -40,14 +38,6 @@ _SECTIONS_DIR = Path(__file__).resolve().parent / "guide_sections"
 _SERVICES_DIR = config.MODEL_API_DIR / "services"
 
 _HTTP_METHODS = frozenset({"get", "post", "put", "patch", "delete", "options", "head"})
-
-# Routes that never require a token, regardless of MODEL_API_DISABLE_AUTH --
-# FastAPI's own doc UIs, plus this guide itself. Any other no-token route
-# is discovered dynamically from the OpenAPI schema instead (see
-# _public_api_paths), so a future endpoint that simply omits
-# Depends(require_token) is picked up automatically rather than needing a
-# second place to update.
-_ALWAYS_PUBLIC_PATHS = ("/docs", "/redoc", "/openapi.json", "/v1/guide")
 
 # Path prefixes shared by every backend -- not registered in server.py's
 # backend list because they're not backend-specific. Used only to group the
@@ -79,7 +69,6 @@ class GuideBundle(NamedTuple):
 
     template: str
     content_hash: str  # "sha256:<hex>" of `template` -- stable across callers/requests
-    public_paths: list[str]
     backend_facts: list[dict[str, str]]
 
 
@@ -90,20 +79,10 @@ def _fmt_days(days: float) -> str:
 def _static_facts() -> dict[str, str]:
     """Facts fixed for the life of this process -- computed once, reused by
     both the Swagger header (render_summary(), at import time) and every
-    request to GET /v1/guide. Every value here traces back to common/config.py
-    or common/auth.py, never a hardcoded number, so it can't silently drift
-    from this server's actual running configuration."""
+    request to GET /v1/guide. Every value here traces back to common/config.py,
+    never a hardcoded number, so it can't silently drift from this server's
+    actual running configuration."""
     upload_mb = config.MAX_UPLOAD_BYTES // (1024 * 1024)
-    if AUTH_DISABLED:
-        auth_mode_line = (
-            "**Auth is currently disabled on this deployment** -- send requests with no "
-            "`Authorization` header at all."
-        )
-    else:
-        auth_mode_line = (
-            "**Every endpoint here except the always-open ones below requires a bearer token** -- "
-            "send `Authorization: Bearer <token>` on every other request."
-        )
     if config.MAX_INFLIGHT_JOBS is None:
         max_inflight_line = "No fixed concurrency cap is configured on this deployment right now."
     else:
@@ -115,7 +94,6 @@ def _static_facts() -> dict[str, str]:
         "upload_mb": str(upload_mb),
         "job_retention_days": _fmt_days(config.JOB_RETENTION_DAYS),
         "default_partition": config.FALLBACK_PARTITION,
-        "auth_mode_line": auth_mode_line,
         "max_inflight_line": max_inflight_line,
     }
 
@@ -195,12 +173,6 @@ def _render_operation(path: str, method: str, op: dict[str, Any]) -> str:
     lines: list[str] = []
     summary = op.get("summary") or op.get("operationId") or f"{method.upper()} {path}"
     lines.append(f"#### `{method.upper()} {path}` -- {summary}")
-    lines.append("")
-    lines.append(
-        "Requires a bearer token (unless this deployment has auth disabled -- see \"Access\")."
-        if op.get("security")
-        else "No bearer token required, on any deployment."
-    )
     lines.append("")
 
     description = (op.get("description") or "").strip()
@@ -285,21 +257,6 @@ def _bucket_operations(
     return shared, by_backend, other
 
 
-def _public_api_paths(schema: dict[str, Any]) -> list[str]:
-    """Paths where every declared operation has no security requirement --
-    note this reflects which routes wire up the auth dependency at all, not
-    whether MODEL_API_DISABLE_AUTH currently enforces it (see common/auth.py);
-    that live state is reported separately via facts["auth"]["required"]."""
-    found = []
-    for path, methods in (schema.get("paths") or {}).items():
-        if not isinstance(methods, dict):
-            continue
-        ops = [op for method, op in methods.items() if method in _HTTP_METHODS and isinstance(op, dict)]
-        if ops and all(not op.get("security") for op in ops):
-            found.append(path)
-    return found
-
-
 def _build_bundle(app: Any, backends: list[BackendInfo]) -> GuideBundle:
     schema = app.openapi()
     shared_ops, backend_ops, other_ops = _bucket_operations(schema, backends)
@@ -350,7 +307,6 @@ def _build_bundle(app: Any, backends: list[BackendInfo]) -> GuideBundle:
     return GuideBundle(
         template=template,
         content_hash=f"sha256:{digest}",
-        public_paths=sorted(set(_ALWAYS_PUBLIC_PATHS) | set(_public_api_paths(schema))),
         backend_facts=backend_facts,
     )
 
@@ -383,11 +339,6 @@ def render(app: Any, backends: list[BackendInfo], base_url: str) -> tuple[str, d
     markdown = _fill(bundle.template, {"base_url": base_url, "generated_at": generated_at}, source="<render>")
     facts: dict[str, Any] = {
         "base_url": base_url,
-        "auth": {
-            "required": not AUTH_DISABLED,
-            "scheme": "bearer",
-            "public_paths": bundle.public_paths,
-        },
         "limits": {
             "max_upload_mb": config.MAX_UPLOAD_BYTES // (1024 * 1024),
             "job_retention_days": config.JOB_RETENTION_DAYS,

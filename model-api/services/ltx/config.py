@@ -1,7 +1,7 @@
 """LTX-2.3-specific configuration: model/checkpoint paths and this backend's
 Slurm resource shape.
 
-API-wide settings (host/port, auth, job/upload storage, retention,
+API-wide settings (host/port, job/upload storage, retention,
 partition fallback) live in common/config.py instead -- this module only
 has what's specific to the LTX-2.3 project itself.
 

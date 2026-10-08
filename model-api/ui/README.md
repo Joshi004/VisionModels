@@ -38,9 +38,9 @@ the API's own `/ui` path.
 
 ## Layout
 
-- `src/api.js` -- the only place that calls `fetch()`. Adds the bearer
-  token (if one is set) and turns FastAPI's error bodies into a plain
-  message string. No other file talks to the network directly.
+- `src/api.js` -- the only place that calls `fetch()`. Turns FastAPI's
+  error bodies into a plain message string. No other file talks to the
+  network directly.
 - `src/utils.js` -- small shared helpers (image-conditioning list
   handling, the orientation/height-width and duration/frames toggles, the
   submit-a-job state machine, submit-blocker messages) reused across forms.
@@ -66,10 +66,3 @@ the API's own `/ui` path.
   copy button, a scrollable segment list, and a collapsible word-level list)
   in place of the usual `<audio>`/`<video>` element -- see
   `components/ResultPreview.jsx`'s `isTranscriptPipeline` branch.
-
-## Auth
-
-The token field in the header is optional and stored in the browser's
-`localStorage` (nowhere else). Leave it blank if the server is running with
-`MODEL_API_DISABLE_AUTH=1` (`run.sh`'s current default); fill it in with the
-contents of `secrets/api_token.txt` otherwise.

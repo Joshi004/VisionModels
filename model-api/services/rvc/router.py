@@ -1,7 +1,7 @@
 """RVC/Applio's own voice-conversion endpoints, mounted by server.py under
 /v1/rvc.
 
-Shared infrastructure (auth, job status/result/cancel, uploads) lives at
+Shared infrastructure (job status/result/cancel, uploads) lives at
 the top level in server.py / common/, not here -- this router only has the
 endpoints specific to RVC's own recipes.
 """
@@ -10,10 +10,8 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi import APIRouter, Body, HTTPException
 
-from common import openapi_docs as common_docs
-from common.auth import require_token
 from common.schemas import JobSubmitResponse
 from services.rvc import config, dispatch
 from services.rvc import openapi_docs as rvc_docs
@@ -42,8 +40,6 @@ def _submit(dispatch_fn, req) -> JobSubmitResponse:
     summary="List available voice models",
     description=rvc_docs.VOICES_LIST,
     response_model=VoiceListResponse,
-    responses=common_docs.AUTH_ERROR_RESPONSES,
-    dependencies=[Depends(require_token)],
 )
 def list_voices() -> VoiceListResponse:
     return VoiceListResponse(voices=sorted(config.VOICE_REGISTRY))
@@ -56,7 +52,6 @@ def list_voices() -> VoiceListResponse:
     description=rvc_docs.CONVERT,
     response_model=JobSubmitResponse,
     responses=rvc_docs.CONVERT_RESPONSES,
-    dependencies=[Depends(require_token)],
 )
 def convert_voice(
     req: Annotated[ConvertRequest, Body(openapi_examples=rvc_docs.CONVERT_EXAMPLES)],
@@ -71,7 +66,6 @@ def convert_voice(
     description=rvc_docs.BATCH_CONVERT,
     response_model=JobSubmitResponse,
     responses=rvc_docs.BATCH_CONVERT_RESPONSES,
-    dependencies=[Depends(require_token)],
 )
 def batch_convert_voice(
     req: Annotated[BatchConvertRequest, Body(openapi_examples=rvc_docs.BATCH_CONVERT_EXAMPLES)],

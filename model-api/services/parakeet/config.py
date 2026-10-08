@@ -1,7 +1,7 @@
 """Parakeet TDT transcription configuration: project paths, accepted input
 formats, and this backend's Slurm resource shape.
 
-API-wide settings (host/port, auth, job/upload storage, retention,
+API-wide settings (host/port, job/upload storage, retention,
 partition fallback) live in common/config.py instead -- this module only
 has what's specific to the Parakeet project itself.
 

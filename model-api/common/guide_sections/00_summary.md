@@ -6,8 +6,6 @@ transcription, and more over time) is namespaced under its own path prefix, but 
 shares the same upload, job-submission, and job-tracking endpoints, described once below rather
 than once per backend.
 
-{{auth_mode_line}}
-
 **Start here if you're integrating a third-party system against this API:** `GET /v1/guide` (add
 `?format=json` for the same content plus machine-readable facts) is this exact document, generated
 fresh from this server's own live configuration and `/openapi.json` -- it cannot drift from what

@@ -11,10 +11,6 @@
 #   MODEL_API_FALLBACK_PARTITION          (default "background")
 #   MODEL_API_MAX_INFLIGHT                (optional soft concurrency cap, global across backends)
 #   MODEL_API_RETENTION_DAYS              (finished job cleanup, default 7)
-#   MODEL_API_DISABLE_AUTH                (skip bearer-token auth entirely -- defaults to 1/on
-#                                           below, since this deployment is on a trusted network;
-#                                           set to 0 before running this script to require the
-#                                           bearer token again)
 #
 #   LTX_MEM_PER_GPU, LTX_CPUS, LTX_API_TIME   (LTX-2.3 backend's own Slurm allocation shape)
 #   WAN_ANIMATE_PROJECT_ROOT                          (default /home/naresh/Vision/ModelService_Wan-Animate-2/v1)
@@ -23,10 +19,6 @@
 #   PARAKEET_PROJECT_ROOT                             (default /home/naresh/Vision/ModelService_Parakeet)
 #   PARAKEET_MEM_PER_GPU, PARAKEET_CPUS, PARAKEET_JOB_TIME   (Parakeet backend's own Slurm allocation shape)
 set -euo pipefail
-
-# Auth defaults to disabled (see the header comment above) -- only takes
-# effect if the caller hasn't already set this var to something else.
-export MODEL_API_DISABLE_AUTH="${MODEL_API_DISABLE_AUTH:-1}"
 
 API_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SESSION="model-api"
@@ -42,11 +34,6 @@ tmux new-session -d -s "$SESSION" \
 echo "Started in tmux session '$SESSION'."
 echo "Attach:  tmux attach -t $SESSION   (Ctrl-b d to detach without stopping it)"
 echo "Stop:    tmux kill-session -t $SESSION"
-if [ "$MODEL_API_DISABLE_AUTH" = "1" ]; then
-  echo "Auth:    DISABLED (MODEL_API_DISABLE_AUTH=1) -- no bearer token required on any endpoint."
-else
-  echo "Bearer token file: $API_DIR/secrets/api_token.txt"
-fi
 if [ -d "$API_DIR/ui/dist" ]; then
   echo "Web UI:  http://localhost:${MODEL_API_PORT:-8012}/ui/  (after tunneling, e.g. ssh -L 8012:localhost:8012 ...)"
 else

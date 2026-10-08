@@ -1,7 +1,7 @@
 """FastAPI app: the shared async job-submission API for GPU-cluster
 model-serving backends on this node.
 
-Backend-agnostic pieces (auth, job tracking, uploads, Slurm polling,
+Backend-agnostic pieces (job tracking, uploads, Slurm polling,
 partition selection) live in common/. Each backend (LTX-2.3 and Wan-Animate
 v1 today; more may be added later) owns its own request schemas and Slurm
 dispatch logic under services/<name>/, mounted here under its own path
@@ -31,13 +31,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Annotated, Literal
 
-from fastapi import Body, Depends, FastAPI, File, HTTPException, Query, Request, UploadFile
+from fastapi import Body, FastAPI, File, HTTPException, Query, Request, UploadFile
 from fastapi import Path as PathParam
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from common import config, guide, job_store, openapi_docs, partition_status, poller, purge, storage
-from common.auth import AUTH_DISABLED, require_token
 from common.schemas import (
     CancelResponse,
     GuideResponse,
@@ -75,10 +74,7 @@ async def lifespan(_app: FastAPI):
     _poller_task = asyncio.create_task(poller.poll_forever())
     for warning in guide.lint(app):
         logger.warning("docs lint: %s", warning)
-    if AUTH_DISABLED:
-        logger.warning("model-api ready. AUTH IS DISABLED (MODEL_API_DISABLE_AUTH=1) -- no token required.")
-    else:
-        logger.info("model-api ready. Bearer token file: %s", config.TOKEN_PATH)
+    logger.info("model-api ready.")
     yield
     if _poller_task is not None:
         _poller_task.cancel()
@@ -88,7 +84,7 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(
     title="GPU Cluster Model-Serving API",
-    version="0.3.0",
+    version="0.4.0",
     description=openapi_docs.APP_DESCRIPTION,
     openapi_tags=openapi_docs.TAGS_METADATA,
     lifespan=lifespan,
@@ -133,7 +129,7 @@ def get_guide(
             alias="format",
             description=(
                 "'markdown' (default): plain-text prose, meant to be read directly. 'json': the same "
-                "content plus structured facts (auth mode, limits, registered backends, ...) for code "
+                "content plus structured facts (limits, registered backends, ...) for code "
                 "to consume."
             ),
         ),
@@ -179,7 +175,6 @@ def health() -> HealthResponse:
     description=openapi_docs.PARTITIONS,
     response_model=PartitionStatusResponse,
     responses=openapi_docs.PARTITIONS_RESPONSES,
-    dependencies=[Depends(require_token)],
 )
 def get_partitions() -> PartitionStatusResponse:
     try:
@@ -199,7 +194,6 @@ def get_partitions() -> PartitionStatusResponse:
     description=openapi_docs.UPLOAD,
     response_model=UploadResponse,
     responses=openapi_docs.UPLOAD_RESPONSES,
-    dependencies=[Depends(require_token)],
 )
 async def upload(
     file: Annotated[UploadFile, File(description="The image, audio, or video file to upload.")],
@@ -292,7 +286,6 @@ def _row_to_list_item(row: sqlite3.Row, typical_cache: dict[str, tuple[float | N
     description=openapi_docs.JOB_LIST,
     response_model=JobListResponse,
     responses=openapi_docs.JOB_LIST_RESPONSES,
-    dependencies=[Depends(require_token)],
 )
 def list_jobs(
     limit: Annotated[int, Query(ge=1, le=500, description="Max number of jobs to return, most recent first.")] = 50,
@@ -309,7 +302,6 @@ def list_jobs(
     description=openapi_docs.JOB_STATUS,
     response_model=JobStatusResponse,
     responses=openapi_docs.JOB_STATUS_RESPONSES,
-    dependencies=[Depends(require_token)],
 )
 def job_status(job_id: _JOB_ID_PARAM) -> JobStatusResponse:
     row = job_store.get_job(job_id)
@@ -329,7 +321,6 @@ def job_status(job_id: _JOB_ID_PARAM) -> JobStatusResponse:
     # purposes only, which injects a spurious, empty "application/json"
     # content entry into the 200 response alongside the real ones above.
     response_class=Response,
-    dependencies=[Depends(require_token)],
 )
 def job_result(job_id: _JOB_ID_PARAM) -> FileResponse:
     row = job_store.get_job(job_id)
@@ -362,7 +353,6 @@ def job_result(job_id: _JOB_ID_PARAM) -> FileResponse:
     response_model=CancelResponse,
     response_model_exclude_none=True,
     responses=openapi_docs.CANCEL_RESPONSES,
-    dependencies=[Depends(require_token)],
 )
 def cancel_job(job_id: _JOB_ID_PARAM) -> CancelResponse:
     row = job_store.get_job(job_id)
@@ -383,7 +373,6 @@ def cancel_job(job_id: _JOB_ID_PARAM) -> CancelResponse:
     description=openapi_docs.PURGE_JOB,
     response_model=PurgeResponse,
     responses=openapi_docs.PURGE_RESPONSES,
-    dependencies=[Depends(require_token)],
 )
 def purge_job(job_id: _JOB_ID_PARAM) -> PurgeResponse:
     row = job_store.get_job(job_id)
