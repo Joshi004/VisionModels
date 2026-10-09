@@ -4,6 +4,21 @@ Dates are when a change shipped on this codebase, not necessarily when you're re
 `api_version` field (`GET /v1/guide?format=json`) is this server's own current version; compare it
 against what you last integrated against.
 
+- **0.7.0** (2026-10-10): Added a sixth backend, Breeze TTS 2 text-to-speech
+  (`POST /v1/breeze-tts/synthesize`). One endpoint covers Voice Design (`text` + `instruction`),
+  Voice Clone (`text` + `reference_audio_asset_id` + `reference_text`) and Voice Direction (clone
+  plus `instruction`); returns a mono 24 kHz WAV. Jobs it creates report their `pipeline` as
+  `breeze-tts:synthesize`. Declared the `Text to speech` tag. Model weights are for research and
+  non-commercial use only. No change to any existing endpoint.
+- **0.6.0** (2026-10-09): Added `POST /v1/ltx25/videos/interpolate` to the LTX-2.5 backend --
+  generates the motion between a given first frame and a given last frame (`first_frame_asset_id`,
+  `last_frame_asset_id`, `prompt`), in `fast` or `quality` mode like text-to-video. Jobs it creates
+  report their `pipeline` as `ltx25:interpolate`. No change to any existing endpoint.
+- **0.5.0** (2026-10-09): Added a fifth backend, LTX-2.5, alongside the unchanged LTX-2.3 backend:
+  `POST /v1/ltx25/videos/generate` (text/image-to-video, `fast` or `quality`, with optional
+  `auto_duration`) and `POST /v1/ltx25/videos/retake`. LTX-2.5 can cut between several shots inside
+  one clip -- written into the prompt, there is no separate field. Jobs it creates report their
+  `pipeline` as `ltx25:text-to-video` or `ltx25:retake`.
 - **0.4.0** (2026-10-08): Removed authentication entirely. No endpoint requires an `Authorization`
   header any more, so no endpoint returns `401`, and `GET /v1/guide?format=json` no longer has a
   `facts.auth` object. Clients that still send an `Authorization` header are unaffected -- it is

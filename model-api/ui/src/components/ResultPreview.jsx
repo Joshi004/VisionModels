@@ -11,7 +11,9 @@ import Button from './ui/Button.jsx';
 // dispatch_text_to_audio); `rvc:convert` also produces audio, but its real
 // extension follows whatever `export_format` its own request chose (see
 // resultExtension below) -- unlike text-to-audio, it is not always .wav.
-const AUDIO_PIPELINES = new Set(['ltx:text-to-audio', 'rvc:convert']);
+// `breeze-tts:synthesize` always produces .wav (see
+// services/breeze_tts/dispatch.py).
+const AUDIO_PIPELINES = new Set(['ltx:text-to-audio', 'rvc:convert', 'breeze-tts:synthesize']);
 
 function isAudioPipeline(pipeline) {
   return AUDIO_PIPELINES.has(pipeline);

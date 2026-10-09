@@ -2,10 +2,10 @@
 model-serving backends on this node.
 
 Backend-agnostic pieces (job tracking, uploads, Slurm polling,
-partition selection) live in common/. Each backend (LTX-2.3 and Wan-Animate
-v1 today; more may be added later) owns its own request schemas and Slurm
-dispatch logic under services/<name>/, mounted here under its own path
-prefix.
+partition selection) live in common/. Each backend (LTX-2.3, LTX-2.5,
+Wan-Animate v1, RVC, Parakeet and Breeze TTS 2 today; more may be added later) owns its
+own request schemas and Slurm dispatch logic under services/<name>/,
+mounted here under its own path prefix.
 
 The long-form documentation shown in /docs and /openapi.json (app
 description, tags, and the common endpoints' descriptions/examples) lives
@@ -50,8 +50,12 @@ from common.schemas import (
     UploadResponse,
 )
 from common.slurm import cancel_slurm_job
+from services.breeze_tts import config as breeze_tts_config
+from services.breeze_tts.router import router as breeze_tts_router
 from services.ltx import config as ltx_config
 from services.ltx.router import router as ltx_router
+from services.ltx25 import config as ltx25_config
+from services.ltx25.router import router as ltx25_router
 from services.parakeet import config as parakeet_config
 from services.parakeet.router import router as parakeet_router
 from services.rvc import config as rvc_config
@@ -84,7 +88,7 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(
     title="GPU Cluster Model-Serving API",
-    version="0.4.0",
+    version="0.7.0",
     description=openapi_docs.APP_DESCRIPTION,
     openapi_tags=openapi_docs.TAGS_METADATA,
     lifespan=lifespan,
@@ -94,9 +98,11 @@ app = FastAPI(
 # (e.g. MAGI-2.2, Wan-Animate v2) the same way once their own
 # services/<name>/ module exists.
 app.include_router(ltx_router, prefix="/v1/ltx")
+app.include_router(ltx25_router, prefix="/v1/ltx25")
 app.include_router(wan_animate_router, prefix="/v1/wan-animate")
 app.include_router(rvc_router, prefix="/v1/rvc")
 app.include_router(parakeet_router, prefix="/v1/parakeet")
+app.include_router(breeze_tts_router, prefix="/v1/breeze-tts")
 
 # Registered backends, for GET /v1/guide (common/guide.py) -- each entry is
 # a small, enumerable set of facts: display name, path prefix, and where
@@ -107,9 +113,11 @@ app.include_router(parakeet_router, prefix="/v1/parakeet")
 # missing their own curated section until this list catches up.
 _BACKENDS: list[guide.BackendInfo] = [
     guide.BackendInfo(id="ltx", name="LTX-2.3", prefix="/v1/ltx", guide_file="ltx/GUIDE.md"),
+    guide.BackendInfo(id="ltx25", name="LTX-2.5", prefix="/v1/ltx25", guide_file="ltx25/GUIDE.md"),
     guide.BackendInfo(id="wan-animate", name="Wan-Animate v1", prefix="/v1/wan-animate", guide_file="wan_animate/GUIDE.md"),
     guide.BackendInfo(id="rvc", name="RVC voice conversion", prefix="/v1/rvc", guide_file="rvc/GUIDE.md"),
     guide.BackendInfo(id="parakeet", name="Parakeet transcription", prefix="/v1/parakeet", guide_file="parakeet/GUIDE.md"),
+    guide.BackendInfo(id="breeze-tts", name="Breeze TTS 2 text-to-speech", prefix="/v1/breeze-tts", guide_file="breeze_tts/GUIDE.md"),
 ]
 
 
@@ -216,9 +224,11 @@ _JOB_ID_PARAM = Annotated[
 # backend joins.
 _TYPICAL_FALLBACK_SECONDS: dict[str, float] = {
     "ltx": ltx_config.TYPICAL_RUN_SECONDS,
+    "ltx25": ltx25_config.TYPICAL_RUN_SECONDS,
     "wan-animate": wan_animate_config.TYPICAL_RUN_SECONDS,
     "rvc": rvc_config.TYPICAL_RUN_SECONDS,
     "parakeet": parakeet_config.TYPICAL_RUN_SECONDS,
+    "breeze-tts": breeze_tts_config.TYPICAL_RUN_SECONDS,
 }
 
 # Same idea, but for live progress readers -- most backends have none

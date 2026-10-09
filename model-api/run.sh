@@ -13,11 +13,20 @@
 #   MODEL_API_RETENTION_DAYS              (finished job cleanup, default 7)
 #
 #   LTX_MEM_PER_GPU, LTX_CPUS, LTX_API_TIME   (LTX-2.3 backend's own Slurm allocation shape)
+#   LTX25_PROJECT_ROOT                        (default /home/naresh/Vision/ltx-2.5)
+#   LTX25_MEM_PER_GPU, LTX25_CPUS, LTX25_API_TIME   (LTX-2.5 backend's own Slurm allocation shape)
+#   LTX25_VIDEO_VAE                           ("conv" (default, reliable at every length tried) or "diffusion" (see STATUS.md: corrupts the tail of long clips on this cluster))
+#   LTX25_ENHANCER_GEMMA_DIR                  (Gemma instruct dir used only by enhance_prompt; default: LTX-2.3's gemma-3-12b)
 #   WAN_ANIMATE_PROJECT_ROOT                          (default /home/naresh/Vision/ModelService_Wan-Animate-2/v1)
 #   WAN_ANIMATE_MEM_PER_GPU, WAN_ANIMATE_CPUS, WAN_ANIMATE_API_TIME   (Wan-Animate v1's own Slurm allocation shape)
 #
 #   PARAKEET_PROJECT_ROOT                             (default /home/naresh/Vision/ModelService_Parakeet)
 #   PARAKEET_MEM_PER_GPU, PARAKEET_CPUS, PARAKEET_JOB_TIME   (Parakeet backend's own Slurm allocation shape)
+#
+#   BREEZE_TTS_PROJECT_ROOT                           (default /home/naresh/Vision/ModelService_BreezeTTS2)
+#   BREEZE_TTS_MODEL_DIR                              (default <project root>/models/breeze-tts-2)
+#   BREEZE_TTS_MEM_PER_GPU, BREEZE_TTS_CPUS, BREEZE_TTS_JOB_TIME   (Breeze TTS 2 backend's own Slurm allocation shape)
+#   BREEZE_TTS_MAX_TEXT_CHARS                         (default 1000)
 set -euo pipefail
 
 API_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

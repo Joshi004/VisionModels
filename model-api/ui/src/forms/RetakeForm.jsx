@@ -12,8 +12,13 @@ import FieldLabel from '../components/FieldLabel.jsx';
 import SeedField from '../components/SeedField.jsx';
 import PartitionField from '../components/PartitionField.jsx';
 
-const MODEL = 'RetakeRequest';
-const FORM_ID = 'ltx-retake';
+// Defaults are LTX-2.3's. LTX-2.5's retake has identical fields and rules, so
+// App.jsx reuses this same form for it by passing its own formId/model/
+// endpoint (see the 'ltx25-retake' recipe's formProps there) instead of
+// duplicating the whole file.
+const DEFAULT_MODEL = 'RetakeRequest';
+const DEFAULT_FORM_ID = 'ltx-retake';
+const DEFAULT_ENDPOINT = '/v1/ltx/videos/retake';
 
 const DEFAULTS = {
   video: null,
@@ -38,11 +43,22 @@ function fromRequest(initialRequest) {
   };
 }
 
-// Maps 1:1 onto RetakeRequest (services/ltx/schemas.py) -- no shape fields
-// here, since height/width/frame-count are inherited from the source
+// Maps 1:1 onto RetakeRequest (services/ltx/schemas.py), or Ltx25RetakeRequest
+// (services/ltx25/schemas.py) when given LTX-2.5's formProps -- no shape
+// fields here, since height/width/frame-count are inherited from the source
 // video. See TextToVideoForm.jsx for how initialRequest/useFormState/
 // FormShell fit together.
-export default function RetakeForm({ defaultPartition, onSubmitted, initialRequest = null, prefillJob = null, onClearPrefill }) {
+export default function RetakeForm({
+  defaultPartition,
+  onSubmitted,
+  initialRequest = null,
+  prefillJob = null,
+  onClearPrefill,
+  formId: FORM_ID = DEFAULT_FORM_ID,
+  model: MODEL = DEFAULT_MODEL,
+  endpoint = DEFAULT_ENDPOINT,
+  title = 'Retake',
+}) {
   const { values, setField, rememberSettings, reset, restoredDraft } = useFormState(FORM_ID, {
     defaults: DEFAULTS,
     fromRequest: fromRequest(initialRequest),
@@ -72,14 +88,14 @@ export default function RetakeForm({ defaultPartition, onSubmitted, initialReque
   async function handleSubmit(event) {
     event.preventDefault();
     if (blockers.length > 0) return;
-    await submit(() => postJSON('/v1/ltx/videos/retake', payload));
+    await submit(() => postJSON(endpoint, payload));
   }
 
   return (
     <FormShell
-      title="Retake"
+      title={title}
       description="Regenerates only the [start_time, end_time] window. Source video must already have 8k+1 frames and height/width that are multiples of 32 (not checked until the job runs)."
-      endpoint="POST /v1/ltx/videos/retake"
+      endpoint={`POST ${endpoint}`}
       prefillJob={prefillJob}
       onClearPrefill={onClearPrefill}
       restoredDraft={restoredDraft}

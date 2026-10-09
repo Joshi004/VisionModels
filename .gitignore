@@ -15,6 +15,9 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 .mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 .ipynb_checkpoints/
 
 # Virtual environments
@@ -27,6 +30,10 @@ model-api/ui/dist/
 
 # Model weights, checkpoints, Hugging Face caches
 models/
+# ...except upstream Breeze TTS's own Python package, which happens to be named
+# "models" (breeze-tts/models/*.py is source code, not weights). The weights live
+# in ModelService_BreezeTTS2/models/ and stay ignored by the rule above.
+!ModelService_BreezeTTS2/breeze-tts/models/
 checkpoints/
 .cache/
 *.safetensors
@@ -45,6 +52,9 @@ ModelService_RVC-Applio/voices/
 model-api/jobs/
 model-api/jobs.db*
 model-api/logs/
+ltx-2.5/logs/
+slurm-*.out
+nohup.out
 outputs/
 transcripts/
 smoke_test/

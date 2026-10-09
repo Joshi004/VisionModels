@@ -6,6 +6,8 @@ import JobHistory from './components/JobHistory.jsx';
 import { ToastProvider } from './components/ui/Toast.jsx';
 import { FilmIcon, LayersIcon, WaveIcon, RedoIcon, MusicIcon, SwapUserIcon, MicIcon, StackIcon, TranscriptIcon } from './components/icons.jsx';
 import TextToVideoForm from './forms/TextToVideoForm.jsx';
+import Ltx25TextToVideoForm from './forms/Ltx25TextToVideoForm.jsx';
+import Ltx25InterpolateForm from './forms/Ltx25InterpolateForm.jsx';
 import KeyframeInterpolationForm from './forms/KeyframeInterpolationForm.jsx';
 import AudioToVideoForm from './forms/AudioToVideoForm.jsx';
 import RetakeForm from './forms/RetakeForm.jsx';
@@ -14,6 +16,7 @@ import WanReplaceForm from './forms/WanReplaceForm.jsx';
 import RvcConvertForm from './forms/RvcConvertForm.jsx';
 import RvcBatchForm from './forms/RvcBatchForm.jsx';
 import TranscribeForm from './forms/TranscribeForm.jsx';
+import BreezeTtsForm from './forms/BreezeTtsForm.jsx';
 import { getHealth, getOpenApi } from './api.js';
 import { extractSchemas, SchemaContext } from './schema.js';
 import { usePersistedState } from './storage.js';
@@ -23,9 +26,11 @@ import { usePersistedState } from './storage.js';
 // add here for them until that changes.
 const GROUPS = [
   { id: 'ltx', label: 'LTX-2.3' },
+  { id: 'ltx25', label: 'LTX-2.5' },
   { id: 'wan', label: 'Wan-Animate' },
   { id: 'rvc', label: 'Voice Conversion' },
   { id: 'parakeet', label: 'Transcription' },
+  { id: 'breeze', label: 'Text to Speech' },
 ];
 
 // One entry per generation recipe this API actually has today. `pipeline`
@@ -80,6 +85,37 @@ const RECIPES = [
     pipeline: 'ltx:text-to-audio',
   },
   {
+    id: 'ltx25-generate',
+    label: 'Text / image to video',
+    description: 'Generate a video on LTX-2.5, with native multi-shot cuts written into the prompt.',
+    group: 'ltx25',
+    icon: FilmIcon,
+    Component: Ltx25TextToVideoForm,
+    pipeline: 'ltx25:text-to-video',
+  },
+  {
+    id: 'ltx25-interpolate',
+    label: 'First / last frame',
+    description: 'Generate the motion between a given first frame and a given last frame on LTX-2.5.',
+    group: 'ltx25',
+    icon: LayersIcon,
+    Component: Ltx25InterpolateForm,
+    pipeline: 'ltx25:interpolate',
+  },
+  {
+    id: 'ltx25-retake',
+    label: 'Retake',
+    description: 'Regenerate a short window of an existing video on LTX-2.5.',
+    group: 'ltx25',
+    icon: RedoIcon,
+    Component: RetakeForm,
+    // Same form as LTX-2.3's Retake (identical fields), pointed at LTX-2.5's
+    // own endpoint and request schema -- see the props at the top of
+    // forms/RetakeForm.jsx.
+    formProps: { formId: 'ltx25-retake', model: 'Ltx25RetakeRequest', endpoint: '/v1/ltx25/videos/retake', title: 'Retake (LTX-2.5)' },
+    pipeline: 'ltx25:retake',
+  },
+  {
     id: 'wan-replace',
     label: 'Replace character',
     description: 'Swap the on-screen person in a video for a reference photo.',
@@ -114,6 +150,15 @@ const RECIPES = [
     icon: TranscriptIcon,
     Component: TranscribeForm,
     pipeline: 'parakeet:transcribe',
+  },
+  {
+    id: 'breeze-synthesize',
+    label: 'Synthesize speech',
+    description: 'Generate speech from text: design a voice from a description, or clone and direct a reference voice.',
+    group: 'breeze',
+    icon: WaveIcon,
+    Component: BreezeTtsForm,
+    pipeline: 'breeze-tts:synthesize',
   },
 ];
 
@@ -291,6 +336,7 @@ export default function App() {
                       // straight to another (or back to a blank form)
                       // would leave stale field values in place.
                       key={prefill ? `retry-${prefill.nonce}` : activeRecipe.id}
+                      {...activeRecipe.formProps}
                       defaultPartition={health?.default_partition}
                       onSubmitted={handleSubmitted}
                       initialRequest={prefill?.job.request ?? null}

@@ -183,9 +183,14 @@ class JobStatusResponse(BaseModel):
             "ltx:audio-to-video",
             "ltx:retake",
             "ltx:text-to-audio",
+            "ltx25:text-to-video",
+            "ltx25:interpolate",
+            "ltx25:retake",
             "wan-animate:replace",
             "rvc:convert",
             "rvc:batch-convert",
+            "parakeet:transcribe",
+            "breeze-tts:synthesize",
         ],
     )
     status: Literal["queued", "running", "succeeded", "failed"] = Field(

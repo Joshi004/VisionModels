@@ -50,6 +50,10 @@ TAGS_METADATA = [
         "description": "Convert an existing recording to sound like one of a curated set of pre-installed voices, keeping its original delivery intact.",
     },
     {
+        "name": "Text to speech",
+        "description": "Generate speech from text (English and Chinese) -- design a voice from a description, or clone/direct a reference voice.",
+    },
+    {
         "name": "Transcription",
         "description": "Speech-to-text for an existing recording (or a video's audio track), with word- and segment-level timestamps.",
     },

@@ -2,7 +2,7 @@
 
 A single asynchronous HTTP API for GPU-cluster model-serving backends on this node. Each backend
 (video generation, character replacement in existing video, voice conversion, speech
-transcription, and more over time) is namespaced under its own path prefix, but every one of them
+transcription, text-to-speech, and more over time) is namespaced under its own path prefix, but every one of them
 shares the same upload, job-submission, and job-tracking endpoints, described once below rather
 than once per backend.
 
